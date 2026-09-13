@@ -104,6 +104,67 @@ func TestFormatZshExtendedRoundTrip(t *testing.T) {
 	}
 }
 
+func TestParseFishHistory(t *testing.T) {
+	in := "- cmd: git status\n  when: 1699999999\n- cmd: git commit -m \"fix bug\"\n  when: 1700000010\n  paths:\n    - src/main.go\n    - src/other.go\n"
+	entries, err := ParseFishHistory([]byte(in))
+	if err != nil {
+		t.Fatalf("ParseFishHistory: %v", err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("got %d entries, want 2", len(entries))
+	}
+	if entries[0].Command != "git status" || entries[0].Timestamp.Unix() != 1699999999 {
+		t.Errorf("entry 0 = %+v", entries[0])
+	}
+	if entries[1].Command != `git commit -m "fix bug"` || entries[1].Timestamp.Unix() != 1700000010 {
+		t.Errorf("entry 1 = %+v", entries[1])
+	}
+}
+
+func TestParseFishHistoryEscapedCommand(t *testing.T) {
+	in := "- cmd: echo one \\n echo two \\\\ done\n  when: 1699999999\n"
+	entries, err := ParseFishHistory([]byte(in))
+	if err != nil {
+		t.Fatalf("ParseFishHistory: %v", err)
+	}
+	want := "echo one \n echo two \\ done"
+	if len(entries) != 1 || entries[0].Command != want {
+		t.Fatalf("got %+v, want command %q", entries, want)
+	}
+}
+
+func TestParseFishHistoryRejectsBadEntry(t *testing.T) {
+	_, err := ParseFishHistory([]byte("cmd: git status\nwhen: 1699999999\n"))
+	if err == nil {
+		t.Fatal("expected an error for a line missing the '- cmd:' prefix")
+	}
+}
+
+func TestParseFishHistoryRejectsMissingWhen(t *testing.T) {
+	_, err := ParseFishHistory([]byte("- cmd: git status\n"))
+	if err == nil {
+		t.Fatal("expected an error for an entry with no 'when:' line")
+	}
+}
+
+func TestParseFishHistoryRejectsBadWhen(t *testing.T) {
+	_, err := ParseFishHistory([]byte("- cmd: git status\n  when: not-a-number\n"))
+	if err == nil {
+		t.Fatal("expected an error for an invalid 'when:' timestamp")
+	}
+}
+
+func TestFormatFishHistoryRoundTrip(t *testing.T) {
+	in := "- cmd: git status\n  when: 1699999999\n- cmd: echo one \\n two\n  when: 1700000010\n"
+	entries, err := ParseFishHistory([]byte(in))
+	if err != nil {
+		t.Fatalf("ParseFishHistory: %v", err)
+	}
+	if out := FormatFishHistory(entries); out != in {
+		t.Errorf("round trip mismatch:\ngot:  %q\nwant: %q", out, in)
+	}
+}
+
 func TestFormatPlainRoundTrip(t *testing.T) {
 	in := "git status\nls -la\n"
 	entries, err := ParsePlain([]byte(in))

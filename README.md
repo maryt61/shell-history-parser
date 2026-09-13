@@ -1,17 +1,20 @@
 # shell-history-parser
 
 Every shell writes its history file in its own format, and the formats
-don't agree on much. Fish and unconfigured bash write one command per
-line. Bash with `HISTTIMEFORMAT` set writes a `#<unix-seconds>` comment
-line ahead of every command. Zsh's `EXTENDED_HISTORY` writes a start
-time and elapsed run time on the same line as the command, and splits
+don't agree on much. Unconfigured bash writes one command per line.
+Bash with `HISTTIMEFORMAT` set writes a `#<unix-seconds>` comment line
+ahead of every command. Zsh's `EXTENDED_HISTORY` writes a start time
+and elapsed run time on the same line as the command, and splits
 commands that contain a literal newline across multiple lines joined
-by a trailing backslash.
+by a trailing backslash. Fish writes a YAML-like `- cmd: ... / when:
+...` block per entry, with backslashes and newlines inside the command
+itself backslash-escaped rather than written literally.
 
 If you've ever tried to grep, dedupe, or migrate history between
-shells you've probably hit all three quirks at once: a naive
-line-by-line split merges a bash timestamp into the command that
-follows it, or drops half of a multi-line zsh entry.
+shells you've probably hit these quirks at once: a naive line-by-line
+split merges a bash timestamp into the command that follows it, drops
+half of a multi-line zsh entry, or takes a fish `paths:` line for a
+new command.
 
 `shellhist` parses each of these formats into a small validated
 `Entry` type, and can pretty-print or reserialize the result. Parsing
@@ -64,13 +67,16 @@ plain table-driven tests.
 | `ParsePlain`             | one command per line, no metadata          |
 | `ParseBashTimestamped`   | bash with `HISTTIMEFORMAT` set             |
 | `ParseZshExtended`       | zsh with `EXTENDED_HISTORY`                |
+| `ParseFishHistory`       | fish's `- cmd: / when:` format             |
 
-`FormatPlain` and `FormatZshExtended` are the corresponding inverse
-operations; `Format` is a read-only pretty printer, not tied to any
-one source format.
+`FormatPlain`, `FormatZshExtended` and `FormatFishHistory` are the
+corresponding inverse operations; `Format` is a read-only pretty
+printer, not tied to any one source format. `FormatFishHistory` drops
+the `paths:` block fish attaches to some entries, since `Entry` has no
+field to hold it.
 
 ## Status
 
-Early skeleton. Not yet handled: fish's history format, bash's
-`HISTTIMEFORMAT` strftime layouts other than raw epoch seconds, and
-history files that mix formats within one file.
+Early skeleton. Not yet handled: bash's `HISTTIMEFORMAT` strftime
+layouts other than raw epoch seconds, and history files that mix
+formats within one file.

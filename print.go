@@ -43,6 +43,40 @@ func FormatPlain(entries []Entry) string {
 	return b.String()
 }
 
+// FormatFishHistory renders entries back into fish's history file
+// format, the inverse of ParseFishHistory for entries it produced.
+// Since Entry has no field for the "paths" list fish also stores,
+// entries that came from an entry with a paths block will round-trip
+// without it.
+func FormatFishHistory(entries []Entry) string {
+	var b strings.Builder
+	for _, e := range entries {
+		fmt.Fprintf(&b, "- cmd: %s\n", escapeFishCommand(e.Command))
+		fmt.Fprintf(&b, "  when: %d\n", e.Timestamp.Unix())
+	}
+	return b.String()
+}
+
+// escapeFishCommand applies the same backslash-escaping fish uses
+// when writing a "cmd" value, the inverse of unescapeFishCommand.
+func escapeFishCommand(s string) string {
+	if !strings.ContainsAny(s, "\\\n") {
+		return s
+	}
+	var b strings.Builder
+	for _, r := range s {
+		switch r {
+		case '\\':
+			b.WriteString(`\\`)
+		case '\n':
+			b.WriteString(`\n`)
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
 // FormatZshExtended renders entries back into zsh's EXTENDED_HISTORY
 // format, the inverse of ParseZshExtended. Commands containing a
 // newline are split back across "\"-continued lines.
