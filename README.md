@@ -69,14 +69,16 @@ plain table-driven tests.
 | `ParseZshExtended`       | zsh with `EXTENDED_HISTORY`                |
 | `ParseFishHistory`       | fish's `- cmd: / when:` format             |
 
-`FormatPlain`, `FormatZshExtended` and `FormatFishHistory` are the
-corresponding inverse operations; `Format` is a read-only pretty
-printer, not tied to any one source format. `FormatFishHistory` drops
-the `paths:` block fish attaches to some entries, since `Entry` has no
-field to hold it.
+`FormatPlain`, `FormatBashTimestamped`, `FormatZshExtended` and
+`FormatFishHistory` are the corresponding inverse operations; `Format`
+is a read-only pretty printer, not tied to any one source format.
+`FormatFishHistory` drops the `paths:` block fish attaches to some
+entries, since `Entry` has no field to hold it.
 
 ## Status
 
-Early skeleton. Not yet handled: bash's `HISTTIMEFORMAT` strftime
-layouts other than raw epoch seconds, and history files that mix
-formats within one file.
+Early skeleton. `HISTTIMEFORMAT` only changes how bash's `history`
+builtin displays timestamps; the `~/.bash_history` file itself always
+stores raw epoch seconds, so `ParseBashTimestamped` already covers it.
+Not yet handled: history files that mix formats within one file, or
+that have a corrupted trailing entry.

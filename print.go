@@ -43,6 +43,22 @@ func FormatPlain(entries []Entry) string {
 	return b.String()
 }
 
+// FormatBashTimestamped renders entries back into bash's timestamped
+// history format, the inverse of ParseBashTimestamped. An entry with
+// a zero Timestamp is written with a "#0" line, since the format has
+// no way to represent an absent timestamp.
+func FormatBashTimestamped(entries []Entry) string {
+	var b strings.Builder
+	for _, e := range entries {
+		var sec int64
+		if !e.Timestamp.IsZero() {
+			sec = e.Timestamp.Unix()
+		}
+		fmt.Fprintf(&b, "#%d\n%s\n", sec, e.Command)
+	}
+	return b.String()
+}
+
 // FormatFishHistory renders entries back into fish's history file
 // format, the inverse of ParseFishHistory for entries it produced.
 // Since Entry has no field for the "paths" list fish also stores,

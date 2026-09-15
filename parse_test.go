@@ -53,6 +53,17 @@ func TestParseBashTimestampedRejectsBadLine(t *testing.T) {
 	}
 }
 
+func TestFormatBashTimestampedRoundTrip(t *testing.T) {
+	in := "#1699999999\ngit status\n#1700000010\nls -la\n"
+	entries, err := ParseBashTimestamped([]byte(in))
+	if err != nil {
+		t.Fatalf("ParseBashTimestamped: %v", err)
+	}
+	if out := FormatBashTimestamped(entries); out != in {
+		t.Errorf("round trip mismatch:\ngot:  %q\nwant: %q", out, in)
+	}
+}
+
 func TestParseZshExtended(t *testing.T) {
 	in := ": 1699999999:3;git status\n: 1700000010:0;echo hi\n"
 	entries, err := ParseZshExtended([]byte(in))
