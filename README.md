@@ -60,6 +60,25 @@ a `[]byte` or `[]Entry` in, returns a value out, and touches no global
 state or file handles, which makes them straightforward to test with
 plain table-driven tests.
 
+## CLI
+
+`cmd/shellhist` is a thin wrapper over the library for one-off use
+from a terminal:
+
+```sh
+go run ./cmd/shellhist cat -format=zsh ~/.zsh_history
+go run ./cmd/shellhist convert -from=zsh -to=plain ~/.zsh_history
+go run ./cmd/shellhist merge -format=bash ~/.bash_history laptop.bash_history
+```
+
+`cat` parses one or more files and prints the table `Format` produces.
+`convert` reparses a file in one format and reprints it in another.
+`merge` parses two or more files of the same format, concatenates
+their entries, sorts them by timestamp (stable, so entries with no
+timestamp keep the order they were read in), and prints the result
+back in that format. Formats are named `plain`, `bash`, `zsh` and
+`fish`, matching the parser names above.
+
 ## Supported formats
 
 | Function                | Format                                    |
